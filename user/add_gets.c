@@ -1,44 +1,53 @@
 #include "kernel/types.h"
-
 #include "kernel/stat.h"
 #include "user/user.h"
-
-#define BUF_SIZE 512
-
-char buf[BUF_SIZE];
-int ptr_buf = 0;
-char a[BUF_SIZE], b[BUF_SIZE];
-int ptr_a = 0, ptr_b = 0;
 
 int
 main()
 {
+  const int BUF_SIZE = 512;
+
+  char buf[BUF_SIZE];
+  int ptr = 0;
   gets(buf, BUF_SIZE);
-  if (ptr_buf < BUF_SIZE && (buf[ptr_buf] == '-' || buf[ptr_buf] == '+')) {
-    a[ptr_a++] = buf[ptr_buf++];
+
+  const char *a = (char*) (buf + ptr);
+  if (ptr < BUF_SIZE && (buf[ptr] == '-' || buf[ptr] == '+')) {
+    ++ptr;
   }
-  while (ptr_buf < BUF_SIZE && '0' <= buf[ptr_buf] && buf[ptr_buf] <= '9') {
-    a[ptr_a++] = buf[ptr_buf++];
+  while (ptr < BUF_SIZE && '0' <= buf[ptr] && buf[ptr] <= '9') {
+    if (ptr > 11) {
+      fprintf(2, "add: first number is too large\n");
+      exit(1);
+    }
+    ++ptr;
   }
-  if (ptr_buf == BUF_SIZE) {
-    fprintf(2, "add: cannot read second number\n");
+
+  if (buf[ptr] != ' ') {
+    fprintf(2, "add: input string must contain two numbers and a space between them, (found after first: %d)\n", (int) buf[ptr]);
     exit(1);
   }
-  if (buf[ptr_buf] != ' ') {
-    fprintf(2, "add: input string must contain two numbers and a space between them\n");
+  buf[ptr++] = '\0';
+
+  const char *b = (char*) (buf + ptr);
+  if (ptr < BUF_SIZE && (buf[ptr] == '-' || buf[ptr] == '+')) {
+    ++ptr;
+  }
+  while (ptr < BUF_SIZE && '0' <= buf[ptr] && buf[ptr] <= '9') {
+    if (ptr > 11) {
+      fprintf(2, "add: second number is too large\n");
+      exit(1);
+    }
+    ++ptr;
+  }
+
+  // 0..31 and 127 - control characters
+  if (31 < buf[ptr] && buf[ptr] < 127) {
+    fprintf(2, "add: input string must contain two numbers and a space between them, (found after second: %d)\n", (int) buf[ptr]);
     exit(1);
   }
-  ptr_buf++;
-  if (ptr_buf < BUF_SIZE && (buf[ptr_buf] == '-' || buf[ptr_buf] == '+')) {
-    b[ptr_b++] = buf[ptr_buf++];
-  }
-  while (ptr_buf < BUF_SIZE && '0' <= buf[ptr_buf] && buf[ptr_buf] <= '9') {
-    b[ptr_b++] = buf[ptr_buf++];
-  }
-  if (ptr_buf != BUF_SIZE && buf[ptr_buf] != '\n') {
-    fprintf(2, "add: input string must contain two numbers and a space between them\n");
-    exit(1);
-  }   
+  buf[ptr] = '\0';
+
   printf("%d\n", atoi(a) + atoi(b));
 
   exit(0);

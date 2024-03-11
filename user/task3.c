@@ -2,53 +2,152 @@
 #include "kernel/stat.h"
 #include "user/user.h"
 
+#define MAX_ITER (1 << 20)
+
 int
 main(int argc, char *argv[])
 {
-  int fds[2];
-  if(pipe(fds) < 0){
-    printf("pipe failed\n");
+  int fds[2], response = pipe(fds);
+  if (response < 0) {
+    printf("pipe failed (response = %d)\n", response);
     exit(1);
   }
-  
-  for (int i = 1; i < argc; ++i) {
-    int len = strlen(argv[i]);
-    if (write(fds[1], argv[i], len) != len) {
-      close(fds[0]);
-      close(fds[1]);
-      printf("write failed\n");
-      exit(1);
-    }
-    if (i + 1 < argc) {
-      if (write(fds[1], " ", 1) != 1) {
-        close(fds[0]);
-        close(fds[1]);
-        printf("write failed\n");
-        exit(1);
-      }
-    }
-  }
-  if (write(fds[1], "\n", 1) != 1) {
-    close(fds[0]);
-    close(fds[1]);
-    printf("write failed\n");
-    exit(1);
-  }
-  close(fds[1]);
 
   int cid = fork();
-  if (cid == 0) {
-    close(0);
-    dup(fds[0]);
-    close(fds[0]);
+  if (cid < 0) {
+    printf("fork failed (response = %d)\n", cid);
 
-    char *argv_wc[] = {"/wc", 0};
-    exec("/wc", argv_wc);
+    response = close(fds[0]);
+    if (response < 0)
+      printf("close failed (response = %d)\n", response);
 
-    exit(0);
+    response = close(fds[1]);
+    if (response < 0)
+      printf("close failed (response = %d)\n", response);
+
+    exit(1);
   }
 
-  wait((int*) 0);
+  if (cid != 0) {
+    response = close(fds[0]);
+    if (response < 0)
+      printf("close failed (response = %d)\n", response);
+
+    int already_wrote = 0, iter = 0;
+    for (int i = 1; i < argc; ++i) {
+      int len = strlen(argv[i]) - already_wrote;
+
+      response = write(fds[1], argv[i] + already_wrote, len);
+      if (response < 0) {
+        printf("write failed (response = %d)\n", response);
+
+        response = close(fds[1]);
+        if (response < 0)
+          printf("close failed (response = %d)\n", response);
+
+        exit(1);
+      }
+
+      if (response != len) {
+        if (response == 0)
+          iter++;
+        if (iter == MAX_ITER) {
+          printf("write failed (unknown error)\n");
+
+          response = close(fds[1]);
+          if (response < 0)
+            printf("close failed (response = %d)\n", response);
+
+          exit(1);
+        }
+
+        already_wrote += response;
+        --i;
+        continue;
+      }
+
+      iter = 0;
+
+      if (i + 1 < argc) {
+        do {
+          ++iter;
+          response = write(fds[1], " ", 1);
+          if (response < 0) {
+            printf("write failed (response = %d)\n", response);
+
+            response = close(fds[1]);
+            if (response < 0)
+              printf("close failed (response = %d)\n", response);
+
+            exit(1);
+          }
+        } while (response != 1 && iter < MAX_ITER);
+
+        if (response != 1) {
+          printf("write failed (unknown error)\n");
+
+          response = close(fds[1]);
+          if (response < 0)
+            printf("close failed (response = %d)\n", response);
+
+          exit(1);
+        }
+      }
+    }
+
+    iter = 0;
+    do {
+      ++iter;
+      response = write(fds[1], "\n", 1);
+      if (response < 0) {
+        printf("write failed (response = %d)\n", response);
+
+        response = close(fds[1]);
+        if (response < 0)
+          printf("close failed (response = %d)\n", response);
+
+        exit(1);
+      }
+    } while (response != 1 && iter < MAX_ITER);
+
+    if (response != 1) {
+      printf("write failed (unknown error)\n");
+
+      response = close(fds[1]);
+      if (response < 0)
+        printf("close failed (response = %d)\n", response);
+
+      exit(1);
+    }
+
+    response = close(fds[1]);
+    if (response < 0)
+      printf("close failed (response = %d)\n", response);
+
+    response = wait((int *) 0);
+    if (response < 0) {
+      printf("wait failed (response = %d)\n", response);
+      exit(1);
+    }
+  } else {
+    close(fds[1]);
+    close(0);
+
+    response = dup(fds[0]);
+    close(fds[0]);
+    if (response < 0) {
+      printf("dup failed (response = %d)\n", response);
+      exit(1);
+    }
+
+
+    char *argv_wc[] = {"/wc", 0};
+    response = exec("/wc", argv_wc);
+    if (response < 0) {
+      printf("exec failed (response = %d)\n", response);
+      exit(1);
+    }
+  }
 
   exit(0);
 }

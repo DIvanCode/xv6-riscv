@@ -6,6 +6,10 @@ int
 main(void)
 {
   int pid = getpid(), cid = fork();
+  if (cid < 0) {
+    printf("fork failed (response = %d)\n", cid);
+    exit(1);
+  }
 
   if (cid == 0) {
     sleep(100);
@@ -14,13 +18,18 @@ main(void)
     printf("%d %d\n", pid, cid);
   }
 
-  kill(cid);
+  int response = kill(cid);
+  if (response < 0) {
+    printf("kill failed (response = %d)\n", response);
+    exit(1);
+  }
 
   int exit_status;
-  // wait is useful, because <cid> is killed and
-  // exit_status will always be -1
-  // but it's ok...
-  wait(&exit_status);
+  response = wait(&exit_status);
+  if (response < 0) {
+    printf("wait failed (response = %d)\n", response);
+    exit(1);
+  }
 
   printf("%d %d\n", cid, exit_status);
 

@@ -5,6 +5,7 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "defs.h"
+#include "procinfo.h"
 
 struct cpu cpus[NCPU];
 
@@ -33,7 +34,7 @@ void
 proc_mapstacks(pagetable_t kpgtbl)
 {
   struct proc *p;
-  
+
   for(p = proc; p < &proc[NPROC]; p++) {
     char *pa = kalloc();
     if(pa == 0)
@@ -48,7 +49,7 @@ void
 procinit(void)
 {
   struct proc *p;
-  
+
   initlock(&pid_lock, "nextpid");
   initlock(&wait_lock, "wait_lock");
   for(p = proc; p < &proc[NPROC]; p++) {
@@ -93,7 +94,7 @@ int
 allocpid()
 {
   int pid;
-  
+
   acquire(&pid_lock);
   pid = nextpid;
   nextpid = nextpid + 1;
@@ -236,7 +237,7 @@ userinit(void)
 
   p = allocproc();
   initproc = p;
-  
+
   // allocate one user page and copy initcode's instructions
   // and data into it.
   uvmfirst(p->pagetable, initcode, sizeof(initcode));
@@ -372,7 +373,7 @@ exit(int status)
 
   // Parent might be sleeping in wait().
   wakeup(p->parent);
-  
+
   acquire(&p->lock);
 
   p->xstate = status;
@@ -428,7 +429,7 @@ wait(uint64 addr)
       release(&wait_lock);
       return -1;
     }
-    
+
     // Wait for a child to exit.
     sleep(p, &wait_lock);  //DOC: wait-sleep
   }
@@ -446,7 +447,7 @@ scheduler(void)
 {
   struct proc *p;
   struct cpu *c = mycpu();
-  
+
   c->proc = 0;
   for(;;){
     // Avoid deadlock by ensuring that devices can interrupt.
@@ -536,7 +537,7 @@ void
 sleep(void *chan, struct spinlock *lk)
 {
   struct proc *p = myproc();
-  
+
   // Must acquire p->lock in order to
   // change p->state and then call sched.
   // Once we hold p->lock, we can be
@@ -615,7 +616,7 @@ int
 killed(struct proc *p)
 {
   int k;
-  
+
   acquire(&p->lock);
   k = p->killed;
   release(&p->lock);
@@ -680,4 +681,77 @@ procdump(void)
     printf("%d %s %s", p->pid, state, p->name);
     printf("\n");
   }
+}
+
+uint64
+ps_listinfo(void) {
+  uint64 addr;
+  argaddr(0, &addr);
+
+  int lim;
+  argint(1, &lim);
+
+  static enum procinfostate states_map[] = {
+    [UNUSED]    STATE_UNUSED,
+    [USED]      STATE_USED,
+    [SLEEPING]  STATE_SLEEPING,
+    [RUNNABLE]  STATE_RUNNABLE,
+    [RUNNING]   STATE_RUNNING,
+    [ZOMBIE]    STATE_ZOMBIE
+  };
+
+  if (addr == 0)
+      lim = -1;
+
+  int cnt_proc = 0;
+  for (struct proc *p = proc; p < &proc[NPROC]; p++) {
+    acquire(&p->lock);
+    if (p->state == UNUSED) {
+      release(&p->lock);
+      continue;
+    }
+
+    if (cnt_proc == lim) {
+      release(&p->lock);
+      return -1;
+    }
+
+    if (addr) {
+      int response = copyout(myproc()->pagetable, addr, p->name, sizeof p->name);
+      if (response < 0) {
+        release(&p->lock);
+        return -2;
+      }
+      addr += sizeof p->name;
+
+      if (p->state >= 0 && p->state < NELEM(states_map) && states_map[p->state]) {
+        enum procinfostate state = states_map[p->state];
+        response = copyout(myproc()->pagetable, addr, (char *) &state, sizeof state);
+        if (response < 0) {
+          release(&p->lock);
+          return -2;
+        }
+        addr += sizeof state;
+      }
+
+      int parent_pid = -1;
+      acquire(&wait_lock);
+      if (p->parent)
+        parent_pid = p->parent->pid;
+      release(&wait_lock);
+
+      response = copyout(myproc()->pagetable, addr, (char *) &parent_pid, sizeof p->pid);
+      if (response < 0) {
+        release(&p->lock);
+        return -2;
+      }
+      addr += sizeof parent_pid;
+    }
+
+    cnt_proc++;
+
+    release(&p->lock);
+  }
+
+  return cnt_proc;
 }

@@ -683,6 +683,8 @@ procdump(void)
   }
 }
 
+#define offsetof(st, m) ((uint64)&(((st *)0)->m))
+
 uint64
 ps_listinfo(void) {
   uint64 addr;
@@ -717,35 +719,49 @@ ps_listinfo(void) {
     }
 
     if (addr) {
-      int response = copyout(myproc()->pagetable, addr, p->name, sizeof p->name);
+      int response = copyout(
+        myproc()->pagetable,
+        addr + offsetof(struct procinfo, name),
+        p->name,
+        sizeof p->name);
       if (response < 0) {
         release(&p->lock);
         return -2;
       }
-      addr += sizeof p->name;
 
       if (p->state >= 0 && p->state < NELEM(states_map) && states_map[p->state]) {
         enum procinfostate state = states_map[p->state];
-        response = copyout(myproc()->pagetable, addr, (char *) &state, sizeof state);
+        response = copyout(
+          myproc()->pagetable,
+          addr + offsetof(struct procinfo, state),
+          (char *) &state,
+          sizeof state);
         if (response < 0) {
           release(&p->lock);
           return -2;
         }
-        addr += sizeof state;
       }
 
       int parent_pid = -1;
       acquire(&wait_lock);
-      if (p->parent)
+      if (p->parent) {
+        acquire(&p->parent->lock);
         parent_pid = p->parent->pid;
+        release(&p->parent->lock);
+      }
       release(&wait_lock);
 
-      response = copyout(myproc()->pagetable, addr, (char *) &parent_pid, sizeof p->pid);
+      response = copyout(
+        myproc()->pagetable,
+        addr + offsetof(struct procinfo, parent_pid),
+        (char *) &parent_pid,
+        sizeof p->pid);
       if (response < 0) {
         release(&p->lock);
         return -2;
       }
-      addr += sizeof parent_pid;
+
+      addr += sizeof (struct procinfo);
     }
 
     cnt_proc++;

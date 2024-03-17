@@ -308,6 +308,11 @@ fork(void)
       np->ofile[i] = filedup(p->ofile[i]);
   np->cwd = idup(p->cwd);
 
+  // increment reference counts on open mutex descriptors.
+  for (i = 0; i < NOMUTEX; i++)
+    if (p->omutex[i])
+      np->omutex[i] = mutexdup(p->omutex[i]);
+
   safestrcpy(np->name, p->name, sizeof(p->name));
 
   pid = np->pid;
@@ -357,6 +362,15 @@ exit(int status)
       struct file *f = p->ofile[fd];
       fileclose(f);
       p->ofile[fd] = 0;
+    }
+  }
+
+  // Close all open mutexes.
+  for (int md = 0; md < NOMUTEX; md++) {
+    if (p->omutex[md]) {
+      struct mutex *m = p->omutex[md];
+      mutexclose(m);
+      p->omutex[md] = 0;
     }
   }
 

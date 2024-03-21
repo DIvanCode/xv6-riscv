@@ -19,6 +19,8 @@ struct {
 void
 mutexinit(void) {
   initlock(&mtable.lock, "mtable");
+  for (int i = 0; i < NMUTEX; ++i)
+    initsleeplock(&mtable[i].lock, "mtable_i");
 }
 
 struct mutex*
@@ -28,8 +30,8 @@ mutexalloc(void) {
   acquire(&mtable.lock);
   for (m = mtable.mutex; m < mtable.mutex + NMUTEX; ++m) {
     if (m->ref == 0) {
-      initsleeplock(m->lock, 0);
       m->ref = 1;
+      m->pid = -1;
       release(&mtable.lock);
       return m;
     }
@@ -39,14 +41,18 @@ mutexalloc(void) {
   return 0;
 }
 
-void
+int
 mutexlock(struct mutex *m) {
   acquire(&mtable.lock);
 
-  if (!holdingsleep(m->lock))
-    acquiresleep(m->lock);
+  if (m->pid != -1)
+    return -1;
+
+  acquiresleep(m->lock);
+  m->pid = myproc()->pid;
 
   release(&mtable.lock);
+  return 0;
 }
 
 struct mutex*
@@ -59,29 +65,34 @@ mutexdup(struct mutex *m) {
   return m;
 }
 
-void
+int
 mutexunlock(struct mutex *m) {
   acquire(&mtable.lock);
 
-  if (holdingsleep(m->lock))
-    releasesleep(m->lock);
+  if (m->pid != myproc()->pid)
+    return -1;
+
+  m->pid = -1;
+  releasesleep(m->lock);
 
   release(&mtable.lock);
+  return 0;
 }
 
 int
 mutexclose(struct mutex *m) {
-  mutexunlock(m);
-
   acquire(&mtable.lock);
+
   if (m->ref < 1)
     return -1;
 
-  int response = 0;
-  if (--m->ref > 0)
-    response = -1;
-  release(&mtable.lock);
+  --m->ref;
+  if (m->pid == myproc()->pid) {
+    m->pid = -1;
+    releasesleep(m->lock);
+  }
 
+  release(&mtable.lock);
   return response;
 }
 
@@ -136,8 +147,7 @@ sys_lock(void) {
   if (argmd(0, 0, &m) < 0)
     return -1;
 
-  mutexlock(m);
-  return 0;
+  return mutexlock(m);
 }
 
 uint64
@@ -147,8 +157,7 @@ sys_unlock(void) {
   if (argmd(0, 0, &m) < 0)
     return -1;
 
-  mutexunlock(m);
-  return 0;
+  return mutexunlock(m);
 }
 
 uint64

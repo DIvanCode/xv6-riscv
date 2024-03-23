@@ -20,7 +20,7 @@ void
 mutexinit(void) {
   initlock(&mtable.lock, "mtable");
   for (int i = 0; i < NMUTEX; ++i)
-    initsleeplock(&mtable[i].lock, "mtable_i");
+    initsleeplock(&mtable.mutex[i].lock, "mtable_i");
 }
 
 struct mutex*
@@ -48,7 +48,7 @@ mutexlock(struct mutex *m) {
   if (m->pid != -1)
     return -1;
 
-  acquiresleep(m->lock);
+  acquiresleep(&m->lock);
   m->pid = myproc()->pid;
 
   release(&mtable.lock);
@@ -73,7 +73,7 @@ mutexunlock(struct mutex *m) {
     return -1;
 
   m->pid = -1;
-  releasesleep(m->lock);
+  releasesleep(&m->lock);
 
   release(&mtable.lock);
   return 0;
@@ -89,11 +89,11 @@ mutexclose(struct mutex *m) {
   --m->ref;
   if (m->pid == myproc()->pid) {
     m->pid = -1;
-    releasesleep(m->lock);
+    releasesleep(&m->lock);
   }
 
   release(&mtable.lock);
-  return response;
+  return 0;
 }
 
 // alloc mutex descriptor in proc's mutex table

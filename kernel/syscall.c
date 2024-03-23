@@ -4,7 +4,6 @@
 #include "riscv.h"
 #include "spinlock.h"
 #include "proc.h"
-#include "mutex.h"
 #include "syscall.h"
 #include "defs.h"
 

@@ -1,5 +1,5 @@
 struct mutex {
-  struct sleeplock *lock;
+  struct sleeplock lock;
   int ref;
   int pid;
 };

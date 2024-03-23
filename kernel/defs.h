@@ -189,9 +189,9 @@ void            virtio_disk_intr(void);
 // mutex.c
 void            mutexinit(void);
 struct mutex*   mutexalloc(void);
-void            mutexlock(struct mutex *m);
+int             mutexlock(struct mutex *m);
 struct mutex*   mutexdup(struct mutex *m);
-void            mutexunlock(struct mutex *m);
+int             mutexunlock(struct mutex *m);
 int             mutexclose(struct mutex *m);
 
 // number of elements in fixed-size array

@@ -19,8 +19,11 @@ struct {
 void
 mutexinit(void) {
   initlock(&mtable.lock, "mtable");
+
+  acquire(&mtable.lock);
   for (int i = 0; i < NMUTEX; ++i)
     initsleeplock(&mtable.mutex[i].lock, "mtable_i");
+  release(&mtable.lock);
 }
 
 struct mutex*
@@ -43,56 +46,38 @@ mutexalloc(void) {
 
 int
 mutexlock(struct mutex *m) {
-  acquire(&mtable.lock);
-
-  if (m->pid != -1)
-    return -1;
-
   acquiresleep(&m->lock);
   m->pid = myproc()->pid;
-
-  release(&mtable.lock);
   return 0;
 }
 
 struct mutex*
 mutexdup(struct mutex *m) {
-  acquire(&mtable.lock);
-  if (m->ref < 1)
+  if (m->ref < 1) {
     panic("mutexdup");
+  }
   m->ref++;
-  release(&mtable.lock);
   return m;
 }
 
 int
 mutexunlock(struct mutex *m) {
-  acquire(&mtable.lock);
-
   if (m->pid != myproc()->pid)
     return -1;
 
   m->pid = -1;
   releasesleep(&m->lock);
-
-  release(&mtable.lock);
   return 0;
 }
 
 int
 mutexclose(struct mutex *m) {
-  acquire(&mtable.lock);
-
   if (m->ref < 1)
     return -1;
 
   --m->ref;
-  if (m->pid == myproc()->pid) {
+  if (m->pid == myproc()->pid)
     m->pid = -1;
-    releasesleep(&m->lock);
-  }
-
-  release(&mtable.lock);
   return 0;
 }
 

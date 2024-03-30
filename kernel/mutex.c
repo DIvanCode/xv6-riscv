@@ -53,10 +53,15 @@ mutexlock(struct mutex *m) {
 
 struct mutex*
 mutexdup(struct mutex *m) {
+  acquire(&mtable.lock);
+
   if (m->ref < 1) {
+    release(&mtable.lock);
     panic("mutexdup");
   }
   m->ref++;
+
+  release(&mtable.lock);
   return m;
 }
 
@@ -72,12 +77,18 @@ mutexunlock(struct mutex *m) {
 
 int
 mutexclose(struct mutex *m) {
-  if (m->ref < 1)
+  acquire(&mtable.lock);
+
+  if (m->ref < 1) {
+    release(&mtable.lock);
     return -1;
+  }
 
   --m->ref;
   if (m->pid == myproc()->pid)
     m->pid = -1;
+  
+  release(&mtable.lock);
   return 0;
 }
 

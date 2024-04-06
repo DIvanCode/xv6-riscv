@@ -142,8 +142,6 @@ sys_dmesg(void) {
     return -1;
   }
 
-  buffer.head = h;
-
   release(&buffer.lock);
   return 0;
 }

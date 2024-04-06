@@ -11,6 +11,8 @@ void queue_write(struct queue *queue, char x) {
   queue->data[queue->tail++] = x;
   if (queue->tail == PGSIZE * QNPAGES)
     queue->tail = 0;
+  if (queue->head == queue->tail)
+    queue->head++;
 
   release(&queue->lock);
 }

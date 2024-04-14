@@ -6,13 +6,9 @@
 #include "queue.h"
 
 void queue_write(struct queue *queue, char x) {
-  acquire(&queue->lock);
-
   queue->data[queue->tail++] = x;
-  if (queue->tail == PGSIZE * QNPAGES)
+  if (queue->tail == PGSIZE * QNPAGES) {
+    queue->over = 1;
     queue->tail = 0;
-  if (queue->head == queue->tail)
-    queue->head++;
-
-  release(&queue->lock);
+  }
 }

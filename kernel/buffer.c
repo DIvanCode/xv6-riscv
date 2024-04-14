@@ -13,7 +13,7 @@ struct queue buffer;
 void
 bufferinit(void) {
   initlock(&buffer.lock, "queue_lock");
-  buffer.head = 0;
+  buffer.over = 0;
   buffer.tail = 0;
 }
 
@@ -56,6 +56,8 @@ pr_msg(char *fmt, ...) {
   va_list ap;
   int i, c;
   char *s;
+
+  acquire(&buffer.lock);
 
   queue_write(&buffer, '[');
 
@@ -108,6 +110,8 @@ pr_msg(char *fmt, ...) {
   va_end(ap);
 
   queue_write(&buffer, '\n');
+
+  release(&buffer.lock);
 }
 
 uint64
@@ -125,8 +129,12 @@ sys_dmesg(void) {
 
   acquire(&buffer.lock);
 
-  int i = 0, h = buffer.head;
-  while (i + 1 < n && h != buffer.tail) {
+  int i = 0, h = 0, cnt = buffer.tail;
+  if (buffer.over) {
+    h = buffer.tail;
+    cnt = PGSIZE * QNPAGES;
+  }
+  while (i + 1 < n && i < cnt) {
     if (copyout(myproc()->pagetable, addr + (i++), &buffer.data[h], 1) < 0) {
       release(&buffer.lock);
       return -1;

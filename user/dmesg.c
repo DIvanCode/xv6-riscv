@@ -7,7 +7,6 @@
 int
 main(int argc, char *argv[]) {
   if (argc == 2 && strcmp(argv[1], "go") == 0) {
-    // test buffer overflow (!with QNPAGES=1 in param.h!)
     for (int i = 0; i < 100; ++i) {
       int pid = fork();
       if (pid == 0) {

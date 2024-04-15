@@ -2,7 +2,7 @@
 #include "kernel/stat.h"
 #include "user/user.h"
 
-#define SSS 1024
+#define SIZE 3500
 
 int
 main(int argc, char *argv[]) {
@@ -18,8 +18,8 @@ main(int argc, char *argv[]) {
     }
   }
 
-  char mesg[SSS];
-  if (dmesg(mesg, SSS) < 0) {
+  char mesg[SIZE];
+  if (dmesg(mesg, SIZE) < 0) {
     printf("error: dmesg\n");
     exit(0);
   }

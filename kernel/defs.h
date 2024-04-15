@@ -9,6 +9,7 @@ struct sleeplock;
 struct stat;
 struct superblock;
 struct queue;
+struct logger;
 
 // bio.c
 void            binit(void);
@@ -192,6 +193,10 @@ void            virtio_disk_intr(void);
 
 // queue.c
 void            queue_write(struct queue *, char);
+
+// logger.c
+void            logger_init();
+int             logger_works();
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))

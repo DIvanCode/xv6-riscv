@@ -21,3 +21,6 @@
 #define SYS_mkdir  20
 #define SYS_close  21
 #define SYS_dmesg  22
+#define SYS_logger_enable 23
+#define SYS_logger_enable_ticks 24
+#define SYS_logger_disable 25

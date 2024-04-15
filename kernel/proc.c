@@ -5,6 +5,7 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "defs.h"
+#include "logger.h"
 
 struct cpu cpus[NCPU];
 
@@ -460,6 +461,59 @@ scheduler(void)
         // before jumping back to us.
         p->state = RUNNING;
         c->proc = p;
+        log_info("switch: pid=%d, name=%s", p->pid, p->name);
+        log_info(" context:");
+        log_info("  ra=%p", c->context.ra);
+        log_info("  sp=%p", c->context.sp);
+        log_info("  s0=%p", c->context.s0);
+        log_info("  s1=%p", c->context.s1);
+        log_info("  s2=%p", c->context.s2);
+        log_info("  s3=%p", c->context.s3);
+        log_info("  s4=%p", c->context.s4);
+        log_info("  s5=%p", c->context.s5);
+        log_info("  s6=%p", c->context.s6);
+        log_info("  s7=%p", c->context.s7);
+        log_info("  s8=%p", c->context.s8);
+        log_info("  s9=%p", c->context.s9);
+        log_info("  s10=%p", c->context.s10);
+        log_info("  s11=%p", c->context.s11);
+        log_info(" trapframe:");
+        log_info("  kernel_satp=%p", p->trapframe->kernel_satp);
+        log_info("  kernel_sp=%p", p->trapframe->kernel_sp);
+        log_info("  kernel_trap=%p", p->trapframe->kernel_trap);
+        log_info("  epc=%p", p->trapframe->epc);
+        log_info("  kernel_hartid=%p", p->trapframe->kernel_hartid);
+        log_info("  ra=%p", p->trapframe->ra);
+        log_info("  sp=%p", p->trapframe->sp);
+        log_info("  gp=%p", p->trapframe->gp);
+        log_info("  tp=%p", p->trapframe->tp);
+        log_info("  t0=%p", p->trapframe->t0);
+        log_info("  t1=%p", p->trapframe->t1);
+        log_info("  t2=%p", p->trapframe->t2);
+        log_info("  s0=%p", p->trapframe->s0);
+        log_info("  s1=%p", p->trapframe->s1);
+        log_info("  a0=%p", p->trapframe->a0);
+        log_info("  a1=%p", p->trapframe->a1);
+        log_info("  a2=%p", p->trapframe->a2);
+        log_info("  a3=%p", p->trapframe->a3);
+        log_info("  a4=%p", p->trapframe->a4);
+        log_info("  a5=%p", p->trapframe->a5);
+        log_info("  a6=%p", p->trapframe->a6);
+        log_info("  a7=%p", p->trapframe->a7);
+        log_info("  s2=%p", p->trapframe->s2);
+        log_info("  s3=%p", p->trapframe->s3);
+        log_info("  s4=%p", p->trapframe->s4);
+        log_info("  s5=%p", p->trapframe->s5);
+        log_info("  s6=%p", p->trapframe->s6);
+        log_info("  s7=%p", p->trapframe->s7);
+        log_info("  s8=%p", p->trapframe->s8);
+        log_info("  s9=%p", p->trapframe->s9);
+        log_info("  s10=%p", p->trapframe->s10);
+        log_info("  s11=%p", p->trapframe->s11);
+        log_info("  t3=%p", p->trapframe->t3);
+        log_info("  t4=%p", p->trapframe->t4);
+        log_info("  t5=%p", p->trapframe->t5);
+        log_info("  t6=%p", p->trapframe->t6);
         swtch(&c->context, &p->context);
 
         // Process is done running for now.

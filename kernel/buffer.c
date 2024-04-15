@@ -135,6 +135,7 @@ sys_dmesg(void) {
     cnt = PGSIZE * QNPAGES;
   }
   while (i + 1 < n && i < cnt) {
+    printf("%d %d %d\n", i, n, cnt);
     if (copyout(myproc()->pagetable, addr + (i++), &buffer.data[h], 1) < 0) {
       release(&buffer.lock);
       return -1;

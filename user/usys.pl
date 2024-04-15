@@ -37,3 +37,6 @@ entry("sbrk");
 entry("sleep");
 entry("uptime");
 entry("dmesg");
+entry("logger_enable");
+entry("logger_enable_ticks");
+entry("logger_disable");

@@ -23,6 +23,9 @@ char* sbrk(int);
 int sleep(int);
 int uptime(void);
 int dmesg(char *, int);
+int logger_enable();
+int logger_enable_ticks(int);
+int logger_disable();
 
 // ulib.c
 int stat(const char*, struct stat*);

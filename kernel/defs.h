@@ -8,12 +8,9 @@ struct spinlock;
 struct sleeplock;
 struct stat;
 struct superblock;
-<<<<<<< HEAD
 struct queue;
 struct logger;
-=======
 struct mutex;
->>>>>>> hw-03
 
 // bio.c
 void            binit(void);

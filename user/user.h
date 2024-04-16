@@ -26,6 +26,10 @@ int dmesg(char *, int);
 int logger_enable();
 int logger_enable_ticks(int);
 int logger_disable();
+int mopen(void);
+int lock(int);
+int unlock(int);
+int mclose(int);
 
 // ulib.c
 int stat(const char*, struct stat*);

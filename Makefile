@@ -31,7 +31,8 @@ OBJS = \
   $K/virtio_disk.o \
   $K/queue.o \
   $K/buffer.o \
-  $K/logger.o
+  $K/logger.o \
+  $K/mutex.o
 
 # riscv64-unknown-elf- or riscv64-linux-gnu-
 # perhaps in /opt/riscv/bin
@@ -137,7 +138,9 @@ UPROGS=\
 	$U/_zombie\
   	$U/_dmesg\
   	$U/_start\
-  	$U/_stop
+  	$U/_stop\
+  	$U/_test_mutex\
+  	$U/_test
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)

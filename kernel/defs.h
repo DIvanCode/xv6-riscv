@@ -8,8 +8,12 @@ struct spinlock;
 struct sleeplock;
 struct stat;
 struct superblock;
+<<<<<<< HEAD
 struct queue;
 struct logger;
+=======
+struct mutex;
+>>>>>>> hw-03
 
 // bio.c
 void            binit(void);
@@ -197,6 +201,14 @@ void            queue_write(struct queue *, char);
 // logger.c
 void            logger_init();
 int             logger_works();
+
+// mutex.c
+void            mutexinit(void);
+struct mutex*   mutexalloc(void);
+int             mutexlock(struct mutex *m);
+struct mutex*   mutexdup(struct mutex *m);
+int             mutexunlock(struct mutex *m);
+int             mutexclose(struct mutex *m);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))

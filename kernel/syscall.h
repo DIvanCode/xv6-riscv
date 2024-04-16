@@ -24,3 +24,7 @@
 #define SYS_logger_enable 23
 #define SYS_logger_enable_ticks 24
 #define SYS_logger_disable 25
+#define SYS_mopen  26
+#define SYS_lock   28
+#define SYS_unlock 29
+#define SYS_mclose 30

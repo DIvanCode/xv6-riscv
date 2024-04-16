@@ -106,6 +106,10 @@ extern uint64 sys_dmesg(void);
 extern uint64 sys_logger_enable(void);
 extern uint64 sys_logger_enable_ticks(void);
 extern uint64 sys_logger_disable(void);
+extern uint64 sys_mopen(void);
+extern uint64 sys_lock(void);
+extern uint64 sys_unlock(void);
+extern uint64 sys_mclose(void);
 
 // An array mapping syscall numbers from syscall.h
 // to the function that handles the system call.
@@ -135,6 +139,10 @@ static uint64 (*syscalls[])(void) = {
 [SYS_logger_enable] sys_logger_enable,
 [SYS_logger_enable_ticks] sys_logger_enable_ticks,
 [SYS_logger_disable] sys_logger_disable,
+[SYS_mopen]   sys_mopen,
+[SYS_lock]    sys_lock,
+[SYS_unlock]  sys_unlock,
+[SYS_mclose]  sys_mclose
 };
 
 void

@@ -12,3 +12,5 @@
 #define FSSIZE       2000  // size of file system in blocks
 #define MAXPATH      128   // maximum file path name
 #define QNPAGES      16
+#define NMUTEX       512 // mutex amount per system
+#define NOMUTEX      16  // open mutexes per process

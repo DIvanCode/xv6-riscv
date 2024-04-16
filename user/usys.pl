@@ -40,3 +40,7 @@ entry("dmesg");
 entry("logger_enable");
 entry("logger_enable_ticks");
 entry("logger_disable");
+entry("mopen");
+entry("lock");
+entry("unlock");
+entry("mclose");

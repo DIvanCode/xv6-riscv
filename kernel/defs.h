@@ -197,15 +197,16 @@ void            queue_write(struct queue *, char);
 
 // logger.c
 void            logger_init();
-int             logger_works();
+int             logger_works(int);
 
 // mutex.c
 void            mutexinit(void);
 struct mutex*   mutexalloc(void);
-int             mutexlock(struct mutex *m);
-struct mutex*   mutexdup(struct mutex *m);
-int             mutexunlock(struct mutex *m);
-int             mutexclose(struct mutex *m);
+int             mutexlock(struct mutex *);
+struct mutex*   mutexdup(struct mutex *);
+int             mutexunlock(struct mutex *);
+int             mutexclose(struct mutex *);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
+#define log_info(who, fmt, ...) do { if (logger_works(who)) pr_msg(fmt, ##__VA_ARGS__); } while(0)

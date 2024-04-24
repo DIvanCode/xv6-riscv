@@ -6,7 +6,7 @@
 #include "proc.h"
 #include "defs.h"
 #include "elf.h"
-#include "logger.h"
+#include "log_types.h"
 
 static int loadseg(pde_t *, uint64, struct inode *, uint, uint);
 
@@ -34,7 +34,7 @@ exec(char *path, char **argv)
 
   begin_op();
 
-  log_info("exec: pid=%d, path=%s", p->pid, path);
+  log_info(TLOG_EXEC, "exec: pid=%d, path=%s", p->pid, path);
 
   if((ip = namei(path)) == 0){
     end_op();

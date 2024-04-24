@@ -6,7 +6,7 @@
 #include "proc.h"
 #include "syscall.h"
 #include "defs.h"
-#include "logger.h"
+#include "log_types.h"
 
 // Fetch the uint64 at addr from the current process.
 int
@@ -155,7 +155,7 @@ syscall(void)
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
     // Use num to lookup the system call function for num, call it,
     // and store its return value in p->trapframe->a0
-    log_info("syscall: pid=%d, num=%d", p->pid, num);
+    log_info(TLOG_SYSCALL, "syscall: pid=%d, num=%d", p->pid, num);
     p->trapframe->a0 = syscalls[num]();
   } else {
     printf("%d %s: unknown sys call %d\n",

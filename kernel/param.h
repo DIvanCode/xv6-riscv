@@ -14,3 +14,4 @@
 #define QNPAGES      16
 #define NMUTEX       512 // mutex amount per system
 #define NOMUTEX      16  // open mutexes per process
+#define N_TLOGS       4

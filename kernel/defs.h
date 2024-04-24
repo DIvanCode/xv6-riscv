@@ -8,6 +8,9 @@ struct spinlock;
 struct sleeplock;
 struct stat;
 struct superblock;
+struct queue;
+struct logger;
+struct mutex;
 
 // bio.c
 void            binit(void);
@@ -107,6 +110,10 @@ int             either_copyout(int user_dst, uint64 dst, void *src, uint64 len);
 int             either_copyin(void *dst, int user_src, uint64 src, uint64 len);
 void            procdump(void);
 
+// buffer.c
+void            bufferinit(void);
+void            pr_msg(char*, ...);
+
 // swtch.S
 void            swtch(struct context*, struct context*);
 
@@ -185,5 +192,21 @@ void            virtio_disk_init(void);
 void            virtio_disk_rw(struct buf *, int);
 void            virtio_disk_intr(void);
 
+// queue.c
+void            queue_write(struct queue *, char);
+
+// logger.c
+void            logger_init();
+int             logger_works(int);
+
+// mutex.c
+void            mutexinit(void);
+struct mutex*   mutexalloc(void);
+int             mutexlock(struct mutex *);
+struct mutex*   mutexdup(struct mutex *);
+int             mutexunlock(struct mutex *);
+int             mutexclose(struct mutex *);
+
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
+#define log_info(who, fmt, ...) do { if (logger_works(who)) pr_msg(fmt, ##__VA_ARGS__); } while(0)

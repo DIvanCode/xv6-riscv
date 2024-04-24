@@ -6,6 +6,7 @@
 #include "proc.h"
 #include "defs.h"
 #include "elf.h"
+#include "log_types.h"
 
 static int loadseg(pde_t *, uint64, struct inode *, uint, uint);
 
@@ -32,6 +33,8 @@ exec(char *path, char **argv)
   struct proc *p = myproc();
 
   begin_op();
+
+  log_info(TLOG_EXEC, "exec: pid=%d, path=%s", p->pid, path);
 
   if((ip = namei(path)) == 0){
     end_op();

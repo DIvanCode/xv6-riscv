@@ -22,6 +22,14 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+int dmesg(char *, int);
+int logger_enable(int);
+int logger_enable_ticks(int, int);
+int logger_disable(int);
+int mopen(void);
+int lock(int);
+int unlock(int);
+int mclose(int);
 
 // ulib.c
 int stat(const char*, struct stat*);

@@ -6,6 +6,7 @@
 #include "proc.h"
 #include "syscall.h"
 #include "defs.h"
+#include "log_types.h"
 
 // Fetch the uint64 at addr from the current process.
 int
@@ -101,6 +102,14 @@ extern uint64 sys_unlink(void);
 extern uint64 sys_link(void);
 extern uint64 sys_mkdir(void);
 extern uint64 sys_close(void);
+extern uint64 sys_dmesg(void);
+extern uint64 sys_logger_enable(void);
+extern uint64 sys_logger_enable_ticks(void);
+extern uint64 sys_logger_disable(void);
+extern uint64 sys_mopen(void);
+extern uint64 sys_lock(void);
+extern uint64 sys_unlock(void);
+extern uint64 sys_mclose(void);
 
 // An array mapping syscall numbers from syscall.h
 // to the function that handles the system call.
@@ -126,6 +135,14 @@ static uint64 (*syscalls[])(void) = {
 [SYS_link]    sys_link,
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
+[SYS_dmesg]   sys_dmesg,
+[SYS_logger_enable] sys_logger_enable,
+[SYS_logger_enable_ticks] sys_logger_enable_ticks,
+[SYS_logger_disable] sys_logger_disable,
+[SYS_mopen]   sys_mopen,
+[SYS_lock]    sys_lock,
+[SYS_unlock]  sys_unlock,
+[SYS_mclose]  sys_mclose
 };
 
 void
@@ -138,6 +155,7 @@ syscall(void)
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
     // Use num to lookup the system call function for num, call it,
     // and store its return value in p->trapframe->a0
+    log_info(TLOG_SYSCALL, "syscall: pid=%d, num=%d", p->pid, num);
     p->trapframe->a0 = syscalls[num]();
   } else {
     printf("%d %s: unknown sys call %d\n",

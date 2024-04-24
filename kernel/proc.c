@@ -5,6 +5,7 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "defs.h"
+#include "log_types.h"
 
 struct cpu cpus[NCPU];
 
@@ -308,6 +309,11 @@ fork(void)
       np->ofile[i] = filedup(p->ofile[i]);
   np->cwd = idup(p->cwd);
 
+  // increment reference counts on open mutex descriptors.
+  for (i = 0; i < NOMUTEX; i++)
+    if (p->omutex[i])
+      np->omutex[i] = mutexdup(p->omutex[i]);
+
   safestrcpy(np->name, p->name, sizeof(p->name));
 
   pid = np->pid;
@@ -357,6 +363,15 @@ exit(int status)
       struct file *f = p->ofile[fd];
       fileclose(f);
       p->ofile[fd] = 0;
+    }
+  }
+
+  // Close all open mutexes.
+  for (int md = 0; md < NOMUTEX; md++) {
+    if (p->omutex[md]) {
+      struct mutex *m = p->omutex[md];
+      mutexclose(m);
+      p->omutex[md] = 0;
     }
   }
 
@@ -460,6 +475,59 @@ scheduler(void)
         // before jumping back to us.
         p->state = RUNNING;
         c->proc = p;
+        log_info(TLOG_SWITCH, "switch: pid=%d, name=%s", p->pid, p->name);
+        log_info(TLOG_SWITCH, " context:");
+        log_info(TLOG_SWITCH, "  ra=%p", c->context.ra);
+        log_info(TLOG_SWITCH, "  sp=%p", c->context.sp);
+        log_info(TLOG_SWITCH, "  s0=%p", c->context.s0);
+        log_info(TLOG_SWITCH, "  s1=%p", c->context.s1);
+        log_info(TLOG_SWITCH, "  s2=%p", c->context.s2);
+        log_info(TLOG_SWITCH, "  s3=%p", c->context.s3);
+        log_info(TLOG_SWITCH, "  s4=%p", c->context.s4);
+        log_info(TLOG_SWITCH, "  s5=%p", c->context.s5);
+        log_info(TLOG_SWITCH, "  s6=%p", c->context.s6);
+        log_info(TLOG_SWITCH, "  s7=%p", c->context.s7);
+        log_info(TLOG_SWITCH, "  s8=%p", c->context.s8);
+        log_info(TLOG_SWITCH, "  s9=%p", c->context.s9);
+        log_info(TLOG_SWITCH, "  s10=%p", c->context.s10);
+        log_info(TLOG_SWITCH, "  s11=%p", c->context.s11);
+        log_info(TLOG_SWITCH, " trapframe:");
+        log_info(TLOG_SWITCH, "  kernel_satp=%p", p->trapframe->kernel_satp);
+        log_info(TLOG_SWITCH, "  kernel_sp=%p", p->trapframe->kernel_sp);
+        log_info(TLOG_SWITCH, "  kernel_trap=%p", p->trapframe->kernel_trap);
+        log_info(TLOG_SWITCH, "  epc=%p", p->trapframe->epc);
+        log_info(TLOG_SWITCH, "  kernel_hartid=%p", p->trapframe->kernel_hartid);
+        log_info(TLOG_SWITCH, "  ra=%p", p->trapframe->ra);
+        log_info(TLOG_SWITCH, "  sp=%p", p->trapframe->sp);
+        log_info(TLOG_SWITCH, "  gp=%p", p->trapframe->gp);
+        log_info(TLOG_SWITCH, "  tp=%p", p->trapframe->tp);
+        log_info(TLOG_SWITCH, "  t0=%p", p->trapframe->t0);
+        log_info(TLOG_SWITCH, "  t1=%p", p->trapframe->t1);
+        log_info(TLOG_SWITCH, "  t2=%p", p->trapframe->t2);
+        log_info(TLOG_SWITCH, "  s0=%p", p->trapframe->s0);
+        log_info(TLOG_SWITCH, "  s1=%p", p->trapframe->s1);
+        log_info(TLOG_SWITCH, "  a0=%p", p->trapframe->a0);
+        log_info(TLOG_SWITCH, "  a1=%p", p->trapframe->a1);
+        log_info(TLOG_SWITCH, "  a2=%p", p->trapframe->a2);
+        log_info(TLOG_SWITCH, "  a3=%p", p->trapframe->a3);
+        log_info(TLOG_SWITCH, "  a4=%p", p->trapframe->a4);
+        log_info(TLOG_SWITCH, "  a5=%p", p->trapframe->a5);
+        log_info(TLOG_SWITCH, "  a6=%p", p->trapframe->a6);
+        log_info(TLOG_SWITCH, "  a7=%p", p->trapframe->a7);
+        log_info(TLOG_SWITCH, "  s2=%p", p->trapframe->s2);
+        log_info(TLOG_SWITCH, "  s3=%p", p->trapframe->s3);
+        log_info(TLOG_SWITCH, "  s4=%p", p->trapframe->s4);
+        log_info(TLOG_SWITCH, "  s5=%p", p->trapframe->s5);
+        log_info(TLOG_SWITCH, "  s6=%p", p->trapframe->s6);
+        log_info(TLOG_SWITCH, "  s7=%p", p->trapframe->s7);
+        log_info(TLOG_SWITCH, "  s8=%p", p->trapframe->s8);
+        log_info(TLOG_SWITCH, "  s9=%p", p->trapframe->s9);
+        log_info(TLOG_SWITCH, "  s10=%p", p->trapframe->s10);
+        log_info(TLOG_SWITCH, "  s11=%p", p->trapframe->s11);
+        log_info(TLOG_SWITCH, "  t3=%p", p->trapframe->t3);
+        log_info(TLOG_SWITCH, "  t4=%p", p->trapframe->t4);
+        log_info(TLOG_SWITCH, "  t5=%p", p->trapframe->t5);
+        log_info(TLOG_SWITCH, "  t6=%p", p->trapframe->t6);
         swtch(&c->context, &p->context);
 
         // Process is done running for now.

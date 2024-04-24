@@ -27,8 +27,11 @@ main()
     binit();         // buffer cache
     iinit();         // inode table
     fileinit();      // file table
+    mutexinit();     // mutex table
     virtio_disk_init(); // emulated hard disk
     userinit();      // first user process
+    bufferinit();
+    logger_init();
     __sync_synchronize();
     started = 1;
   } else {

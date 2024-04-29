@@ -328,7 +328,24 @@ sys_open(void)
       return -1;
     }
     ilock(ip);
-    if(ip->type == T_DIR && omode != O_RDONLY){
+    if (!(omode & O_NOFOLLOW)) {
+      while (ip->type == T_SYMLINK) {
+        for (int i = 0; i < MAXPATH; ++i)
+          path[i] = 0;
+        if (readi(ip, 0, (uint64)&path, 0, MAXPATH) <= 0) {
+          iunlock(ip);
+          end_op();
+          return -1;
+        }
+        iunlock(ip);
+        if ((ip = namei(path)) == 0) {
+          end_op();
+          return -1;
+        }
+        ilock(ip);
+      }
+    }
+    if(ip->type == T_DIR && omode != O_RDONLY && omode != O_NOFOLLOW){
       iunlockput(ip);
       end_op();
       return -1;

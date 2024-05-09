@@ -493,7 +493,7 @@ int main(int argc, char *argv[]) {
   if (argc == 1) {
     for (int i = 1; i <= 13; ++i)
       tests[i - 1]();
-  } else {
+  } else if (argc == 2) {
     int test = atoi(argv[1]);
     if (test < 1 || test > 13) {
       fprintf(2, "error: test must be between 1 and 13\n");

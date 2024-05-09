@@ -304,11 +304,14 @@ create(char *path, short type, short major, short minor)
 uint64
 sys_open(void)
 {
-  char path[MAXPATH];
+  char path[2 * MAXPATH], npath[MAXPATH];
   int fd, omode;
   struct file *f;
   struct inode *ip;
   int n;
+
+  for (int i = 0; i < 2 * MAXPATH; ++i)
+    path[i] = 0;
 
   argint(1, &omode);
   if((n = argstr(0, path, MAXPATH)) < 0)
@@ -329,15 +332,33 @@ sys_open(void)
     }
     ilock(ip);
     if (!(omode & O_NOFOLLOW)) {
+      int rec_depth = 0;
       while (ip->type == T_SYMLINK) {
+        ++rec_depth;
+        if (rec_depth > LINKDEPTH) {
+          iunlock(ip);
+          end_op();
+          return -1;
+        }
         for (int i = 0; i < MAXPATH; ++i)
-          path[i] = 0;
-        if (readi(ip, 0, (uint64)&path, 0, MAXPATH) <= 0) {
+          npath[i] = 0;
+        if (readi(ip, 0, (uint64)&npath, 0, MAXPATH) <= 0) {
           iunlock(ip);
           end_op();
           return -1;
         }
         iunlock(ip);
+        if (*npath == '/') {
+          for (int i = 0; i < MAXPATH; ++i)
+            path[i] = npath[i];
+        } else {
+          char final[MAXPATH];
+          nameiparent(path, final);
+          for (int i = 0; i < strlen(final); ++i)
+            path[strlen(path) - 1] = 0;
+          for (int i = 0; i < strlen(npath); ++i)
+            path[strlen(path)] = npath[i];
+        }
         if ((ip = namei(path)) == 0) {
           end_op();
           return -1;
@@ -535,14 +556,17 @@ uint64 sys_symlink(void) {
 
   begin_op();
   struct inode *ip;
-  ip = create(filename, T_SYMLINK, 0, 0);
-  if (ip == 0) {
-    end_op();
-    return -1;
+  if ((ip = namei(filename)) == 0) {
+    ip = create(filename, T_SYMLINK, 0, 0);
+    if (ip == 0) {
+      end_op();
+      return -1;
+    }
+    iunlock(ip);
   }
-  iunlock(ip);
   end_op();
 
+  n = MAXPATH;
   int max = ((MAXOPBLOCKS-1-1-2) / 2) * BSIZE;
   int i = 0, off = 0;
   while (i < n) {

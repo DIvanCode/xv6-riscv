@@ -2,7 +2,10 @@
 #include "kernel/stat.h"
 #include "kernel/fcntl.h"
 #include "kernel/param.h"
+#include "kernel/fs.h"
 #include "user/user.h"
+
+void view_tree(char *, int);
 
 void mkfile(char *filename, char *data) {
   int f = open(filename, O_RDWR | O_CREATE);
@@ -502,6 +505,109 @@ int main(int argc, char *argv[]) {
     tests[test - 1]();
   }
 
+  view_tree(".", 0);
+
   exit(0);
+}
+
+char*
+fmtname(char *path)
+{
+  static char buf[DIRSIZ+1];
+  char *p;
+
+  // Find first character after last slash.
+  for(p=path+strlen(path); p >= path && *p != '/'; p--)
+    ;
+  p++;
+
+  // Return blank-padded name.
+  if(strlen(p) >= DIRSIZ)
+    return p;
+  memmove(buf, p, strlen(p));
+  memset(buf+strlen(p), ' ', DIRSIZ-strlen(p));
+  return buf;
+}
+
+void
+view_tree(char *path, int level)
+{
+  if (level == 8)
+    return;
+  char mar[8];
+  for (int i = 0; i < level; ++i)
+    mar[i] = ' ';
+  mar[level] = 0;
+  char buf[64];
+  char *p;
+  int fd;
+  struct dirent de;
+  struct stat st;
+
+  if((fd = open(path, O_NOFOLLOW)) < 0){
+    fprintf(2, "%sview_tree: cannot open %s\n", mar, path);
+    return;
+  }
+
+  if(fstat(fd, &st) < 0){
+    fprintf(2, "%sview_tree: cannot stat %s\n", mar, path);
+    close(fd);
+    return;
+  }
+
+  char link_buf[MAXPATH];
+  int r;
+
+  switch(st.type){
+    case T_DEVICE:
+    case T_SYMLINK:
+      r = readlink(path, link_buf);
+      if (r < 0)
+        printf("%s%s %d %d %l ->?\n", mar, fmtname(path), st.type, st.ino, st.size);
+      else {
+        if (r < MAXPATH)
+          link_buf[r] = 0;
+        printf("%s%s %d %d %l ->%s\n", mar, fmtname(path), st.type, st.ino, st.size, link_buf);
+      }
+      break;
+
+    case T_FILE:
+      printf("%s%s %d %d %l\n", mar, fmtname(path), st.type, st.ino, st.size);
+      break;
+
+    case T_DIR:
+      if(strlen(path) + 1 + DIRSIZ + 1 > sizeof buf){
+        printf("%sview_tree: path too long\n", mar);
+        break;
+      }
+      strcpy(buf, path);
+      p = buf+strlen(buf);
+      *p++ = '/';
+      while(read(fd, &de, sizeof(de)) == sizeof(de)){
+        if(de.inum == 0)
+          continue;
+        memmove(p, de.name, DIRSIZ);
+        p[DIRSIZ] = 0;
+        if(lstat(buf, &st) < 0){
+          printf("%sview_tree: cannot stat %s\n", mar, buf);
+          continue;
+        }
+        if (st.type == T_SYMLINK) {
+          r = readlink(buf, link_buf);
+          if (r < 0)
+            printf("%s%s %d %d %l ->?\n", mar, fmtname(buf), st.type, st.ino, st.size);
+          else {
+            if (r < MAXPATH)
+              link_buf[r] = 0;
+            printf("%s%s %d %d %l ->%s\n", mar, fmtname(buf), st.type, st.ino, st.size, link_buf);
+          }
+        } else if (level == 0 || buf[strlen(buf) - 1] != '.')
+          printf("%s%s %d %d %d\n", mar, fmtname(buf), st.type, st.ino, st.size);
+        if (st.type == T_DIR && buf[strlen(buf) - 1] != '.')
+          view_tree(buf, level+1);
+      }
+      break;
+  }
+  close(fd);
 }
 

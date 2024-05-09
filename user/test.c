@@ -49,6 +49,11 @@ int main(int argc, char *argv[]) {
 
   printf("total: wrote %d bytes\n", wrote_bytes);
 
+  if (wrote_bytes != size) {
+    printf("error: cannot write %d bytes\n", size);
+    exit(0);
+  }
+
   f = open(argv[1], O_RDONLY);
   x = x0;
   int read_bytes = 0, corrupted_bytes = 0;
@@ -67,7 +72,16 @@ int main(int argc, char *argv[]) {
   close(f);
 
   printf("total: read %d bytes\n", read_bytes);
+
+  if (read_bytes != wrote_bytes) {
+    printf("error: read_bytes != wrote_bytes\n");
+    exit(0);
+  }
+
   printf("total: success %d/%d bytes\n", read_bytes - corrupted_bytes, read_bytes);
+  if (corrupted_bytes != 0) {
+    printf("error: %d corrupted bytes\n", corrupted_bytes);
+  }
 
   exit(0);
 }

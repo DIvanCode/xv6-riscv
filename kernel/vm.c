@@ -440,7 +440,7 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
   }
 }
 
-void vmprint(pagetable_t pagetable, int offset) {
+void vmprint_rec(pagetable_t pagetable, int offset) {
   if (offset == 0)
     printf("page table %pa\n", pagetable);
   for (int i = 0; i < 512; ++i) {
@@ -451,12 +451,16 @@ void vmprint(pagetable_t pagetable, int offset) {
         printf(".. ");
       printf("..%d: pte %p pa %p\n", i, pte, pa);
       if ((pte & (PTE_R | PTE_W | PTE_X)) == 0)
-        vmprint((pagetable_t) pa, offset + 1);
+        vmprint_rec((pagetable_t) pa, offset + 1);
     }
   }
 }
 
+void vmprint(pagetable_t pagetable) {
+  vmprint_rec(pagetable, 0);
+}
+
 void
 sys_vmprint(void) {
-  vmprint(myproc()->pagetable, 0);
+  vmprint(myproc()->pagetable);
 }

@@ -5,6 +5,8 @@
 #include "riscv.h"
 #include "defs.h"
 #include "fs.h"
+#include "spinlock.h"
+#include "proc.h"
 
 /*
  * the kernel's page table.
@@ -436,4 +438,25 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
   } else {
     return -1;
   }
+}
+
+void vmprint(pagetable_t pagetable, int offset) {
+  if (offset == 0)
+    printf("page table %pa\n", pagetable);
+  for (int i = 0; i < 512; ++i) {
+    pte_t pte = pagetable[i];
+    if (pte & PTE_V) {
+      pte_t pa = PTE2PA(pte);
+      for (int off = 0; off < offset; ++off)
+        printf(".. ");
+      printf("..%d: pte %p pa %p\n", i, pte, pa);
+      if ((pte & (PTE_R | PTE_W | PTE_X)) == 0)
+        vmprint((pagetable_t) pa, offset + 1);
+    }
+  }
+}
+
+void
+sys_vmprint(void) {
+  vmprint(myproc()->pagetable, 0);
 }

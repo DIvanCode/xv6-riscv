@@ -89,3 +89,35 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+uint64
+sys_pgaccess(void) {
+  uint64 page_addr;
+  int nbytes, npages;
+  uint64 addr;
+
+  argaddr(0, &page_addr);
+  argint(1, &nbytes);
+  argaddr(2, &addr);
+
+  page_addr &= ~(PGSIZE - 1);
+
+  npages = (nbytes + PGSIZE - 1) / PGSIZE;
+
+  pagetable_t pagetable = myproc()->pagetable;
+
+  int res = 0;
+  for (int i = 0; i < npages; ++i) {
+    pte_t *pte = walk(pagetable, page_addr, 0);
+    if (*pte & PTE_A) {
+      (*pte) &= ~PTE_A;
+      res = 1;
+    }
+
+    page_addr += PGSIZE;
+  }
+
+  if (copyout(pagetable, addr, (char *)&res, sizeof(res)) < 0)
+    return -1;
+  return 0;
+}

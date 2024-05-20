@@ -22,6 +22,8 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+void vmprint(void);
+int pgaccess(const void *, int, const void*);
 
 // ulib.c
 int stat(const char*, struct stat*);

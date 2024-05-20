@@ -100,6 +100,8 @@ sys_pgaccess(void) {
   argint(1, &nbytes);
   argaddr(2, &addr);
 
+  page_addr &= ~(PGSIZE - 1);
+
   npages = (nbytes + PGSIZE - 1) / PGSIZE;
 
   pagetable_t pagetable = myproc()->pagetable;

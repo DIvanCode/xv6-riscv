@@ -15,7 +15,7 @@ int failed;
 void TEST_1_array_status_0_before_change() {
   // Arrange
   pgaccess(a + PERPAGE, PERPAGE * sizeof(TYPE), 0);
-  int status;
+  int status = 0;
 
   // Act
   pgaccess(a + PERPAGE, PERPAGE * sizeof(TYPE), &status);
@@ -27,7 +27,7 @@ void TEST_1_array_status_0_before_change() {
 void TEST_2_array_status_1_after_change() {
   // Arrange
   pgaccess(a + PERPAGE, PERPAGE * sizeof(TYPE), 0);
-  int status;
+  int status = 0;
 
   // Act
   a[PERPAGE] = 0;
@@ -40,7 +40,7 @@ void TEST_2_array_status_1_after_change() {
 void TEST_3_array_status_0_after_change_and_pgaccess() {
   // Arrange
   pgaccess(a + PERPAGE, PERPAGE * sizeof(TYPE), 0);
-  int status;
+  int status = 0;
 
   // Act
   a[PERPAGE] = 0;
@@ -53,7 +53,7 @@ void TEST_3_array_status_0_after_change_and_pgaccess() {
 
 void TEST_4_int_status_0_before_change() {
   // Arrange
-  int x, status;
+  int x = 0, status = 0;
   pgaccess(&x, sizeof(int), 0);
 
   // Act
@@ -65,7 +65,7 @@ void TEST_4_int_status_0_before_change() {
 
 void TEST_5_int_status_1_after_change() {
   // Arrange
-  int x, status;
+  int x = 0, status = 0;
   pgaccess(&x, sizeof(int), 0);
 
   // Act
@@ -78,7 +78,7 @@ void TEST_5_int_status_1_after_change() {
 
 void TEST_6_int_status_0_after_change_and_pgaccess() {
   // Arrange
-  int x, status;
+  int x = 0, status = 0;
   pgaccess(&x, sizeof(int), 0);
 
   // Act
@@ -93,7 +93,7 @@ void TEST_6_int_status_0_after_change_and_pgaccess() {
 void TEST_7_array_next_page_status_1_after_change() {
   // Arrange
   pgaccess(a + PERPAGE, 2 * PERPAGE * sizeof(TYPE), 0);
-  int status;
+  int status = 0;
 
   // Act
   a[2 * PERPAGE] = 0;
@@ -106,7 +106,7 @@ void TEST_7_array_next_page_status_1_after_change() {
 void TEST_8_array_next_page_status_0_after_change_and_pgaccess() {
   // Arrange
   pgaccess(a + PERPAGE, 2 * PERPAGE * sizeof(TYPE), 0);
-  int status;
+  int status = 0;
 
   // Act
   a[2 * PERPAGE] = 0;

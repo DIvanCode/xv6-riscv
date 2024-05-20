@@ -22,9 +22,12 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+int symlink(const char *, const char *);
+int readlink(const char *, char *);
 
 // ulib.c
 int stat(const char*, struct stat*);
+int lstat(const char*, struct stat*);
 char* strcpy(char*, const char*);
 void *memmove(void*, const void*, int);
 char* strchr(const char*, char c);
@@ -39,3 +42,4 @@ void free(void*);
 int atoi(const char*);
 int memcmp(const void *, const void *, uint);
 void *memcpy(void *, const void *, uint);
+void rec_ls(char *, int);
